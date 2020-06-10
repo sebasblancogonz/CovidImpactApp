@@ -1,24 +1,44 @@
 import React, { Component } from 'react';
+import axios from 'axios'
 import { Platform, StyleSheet, Text, View } from 'react-native';
 import { Header, SearchBar } from 'react-native-elements'
+import Municipalities from '../municipality/index'
 
 
 export default class App extends Component {
 
   state = {
     search: '',
-    searching: false,
+    loading: false,
+    datasource: [],
   }
 
   updateSearch = (search) => {
-    this.setState({ search, searching: true })
-    setTimeout(() => {
-      this.setState({ searching: false })
-    }, 200)
+    this.setState({ search })
+    this.getResults(search)
   }
 
+
+  getResults = () => {
+    console.log(this.getUrl(this.state.search))
+    axios.get(this.getUrl(this.state.search))
+    .then(resp => {
+      console.log("on apppppp", resp.data)
+      this.setState({
+        loading: false,
+        datasource: resp.data,
+      })
+    }).catch((error) => {
+      console.log(error)
+    })
+}
+
+getUrl(search) {
+  return 'https://spcovidimpact.herokuapp.com/api/data'.concat(search != '' ? '?municipality=' + search : '')
+}
+
   render() {
-    const { search, searching } = this.state;
+    const { search, loading, datasource } = this.state;
     return (
       <View style={styles.container}>
         <Header
@@ -33,8 +53,9 @@ export default class App extends Component {
           placeholder="Type municipality, province..."
           onChangeText={this.updateSearch}
           value={search}
-          showLoading={searching}
+          showLoading={loading}
         />
+      <Municipalities list={datasource} />
       </View>
     );
   }
