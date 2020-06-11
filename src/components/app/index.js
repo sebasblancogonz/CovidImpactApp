@@ -32,7 +32,7 @@ const App = () => {
   }, [])
 
   useEffect(() => {
-    f = data.filter((d) => {
+    let f = data.filter((d) => {
       return d.Municip.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, "").includes(search)
     })
 
@@ -49,23 +49,16 @@ const App = () => {
     }
   }
 
-
   const indexOfLastItem = currentPage * dataPerPage > data.length ? data.length : currentPage * dataPerPage;
-  const indexOfFirstItem = 0
-  const currentItems = data.slice(indexOfFirstItem, indexOfLastItem)
+  const currentItems = data.slice(0, indexOfLastItem)
 
   const isCloseToBottom = ({ layoutMeasurement, contentOffset, contentSize }) => {
     return layoutMeasurement.height + contentOffset.y >=
-      contentSize.height - 10;
-  }
-
-  const fetchData = () => {
-    setCurrentPage(currentPage + 1)
-    console.log(currentPage);
+      contentSize.height - 20;
   }
 
   const renderRow = (({ item, index }) =>
-    <ListItem leftIcon={{ name: "location-city"}} rightSubtitle={`${index + 1}`} key={item.Cumum} title={item.Municip} subtitle={item.Province} />)
+    <ListItem leftSubtitle={`${index + 1}`} key={item.Cumum} title={item.Municip} subtitle={item.Province} />)
 
   return (
     <View style={styles.container}>
@@ -88,11 +81,13 @@ const App = () => {
         keyExtractor={(item, index) => index.toString()}
         data={(filteredData && filteredData.length == 0) ? currentItems : filteredData}
         renderItem={renderRow}
+        bounces={false}
         onScroll={({ nativeEvent }) => {
           if (isCloseToBottom(nativeEvent)) {
-            fetchData()
+            setCurrentPage(currentPage + 1)
           }
         }}
+        scrollEventThrottle={400}
       />
     </View>
   );
