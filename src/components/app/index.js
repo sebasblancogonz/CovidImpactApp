@@ -1,8 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Platform, StyleSheet, View, ActivityIndicator } from 'react-native';
-import { Header, SearchBar, ListItem, Icon } from 'react-native-elements'
+import TouchableScale from 'react-native-touchable-scale'
+import { Platform, StyleSheet, View } from 'react-native';
+import { SearchBar, ListItem, Overlay } from 'react-native-elements'
 import axios from 'axios'
 import { FlatList } from 'react-native-gesture-handler';
+import Header from '../header';
+import LoadIndicator from '../loadIndicator';
+import Municipality from '../municipality';
 
 
 const App = () => {
@@ -10,9 +14,25 @@ const App = () => {
   const [data, setData] = useState([])
   const [loading, setLoading] = useState(false)
   const [currentPage, setCurrentPage] = useState(1)
-  const [dataPerPage, setDataPerPage] = useState(15)
   const [search, setSearch] = useState('')
   const [filteredData, setFilteredData] = useState([])
+  const [visible, setVisible] = useState(false)
+  const [cardItem, setCardItem] = useState({})
+
+
+  const indexOfLastItem = currentPage * 15 > data.length ? data.length : currentPage * 15;
+  const currentItems = data.slice(0, indexOfLastItem)
+
+  const isCloseToBottom = ({ layoutMeasurement, contentOffset, contentSize }) => {
+    return layoutMeasurement.height + contentOffset.y >=
+      contentSize.height - 20;
+  }
+
+  const isLoading = () => {
+    if(loading) return (
+      <LoadIndicator isLoading={loading} />
+    )
+  }
 
   useEffect(() => {
     return () => {
@@ -39,36 +59,29 @@ const App = () => {
     setFilteredData(f)
   }, [search])
 
-  const isLoading = () => {
-    if (loading) {
-      return (
-        <View style={[styleLoading.container, styleLoading.horizontal]}>
-          <ActivityIndicator size="large" color="#83878D" />
-        </View>
-      )
-    }
-  }
-
-  const indexOfLastItem = currentPage * dataPerPage > data.length ? data.length : currentPage * dataPerPage;
-  const currentItems = data.slice(0, indexOfLastItem)
-
-  const isCloseToBottom = ({ layoutMeasurement, contentOffset, contentSize }) => {
-    return layoutMeasurement.height + contentOffset.y >=
-      contentSize.height - 20;
+  const toggleOverlay = () => {
+    setVisible(!visible)
   }
 
   const renderRow = (({ item, index }) =>
-    <ListItem leftSubtitle={`${index + 1}`} key={item.Cumum} title={item.Municip} subtitle={item.Province} />)
+    <ListItem
+      leftSubtitle={`${index + 1}`}
+      key={item.Cumum}
+      title={item.Municip}
+      subtitle={item.Province}
+      Component={TouchableScale}
+      friction={90}
+      tension={100}
+      activeScale={0.95}
+      onPress={() => {
+        setCardItem(item)
+        setVisible(true)
+      }}
+    />)
 
   return (
     <View style={styles.container}>
-      <Header
-        placement="left"
-        backgroundColor="#F5F5F5"
-        leftComponent={{ icon: 'menu', color: 'black' }}
-        centerComponent={{ text: 'Covid Impact in Spain', style: { color: 'black' } }}
-        rightComponent={{ icon: 'home', color: 'black' }}
-      />
+      <Header />
       <SearchBar
         platform={Platform.OS}
         placeholder="Type your municipality..."
@@ -89,36 +102,19 @@ const App = () => {
         }}
         scrollEventThrottle={400}
       />
+      <View style={{width:100}}>
+      <Overlay overlayStyle={{width: 400, height: 500}} isVisible={visible} onBackdropPress={toggleOverlay}>
+        <Municipality {...cardItem} />
+      </Overlay>
+      </View>
     </View>
-  );
+  )
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#F5F5F5',
-  },
-  welcome: {
-    fontSize: 20,
-    textAlign: 'center',
-    margin: 10,
-  },
-  instructions: {
-    textAlign: 'center',
-    color: '#333333',
-    marginBottom: 5,
-  },
-});
-
-const styleLoading = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: "center"
-  },
-  horizontal: {
-    flexDirection: "row",
-    justifyContent: "space-around",
-    padding: 10
   }
 });
 
