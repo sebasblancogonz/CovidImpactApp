@@ -3,13 +3,16 @@
   "displayName": "CovidImpactApp",
   "expo": {
     "name": "CovidImpactApp",
-    "slug": "expo-template-bare",
+    "slug": "covidimpactapp",
     "version": "1.0.0",
     "platforms": [
       "ios",
       "android",
       "web"
     ],
-    "assetBundlePatterns": ["**/*"]
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "description": "This bare project template includes a minimal setup for using unimodules with React Native."
   }
 }

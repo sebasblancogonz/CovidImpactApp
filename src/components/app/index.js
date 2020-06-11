@@ -1,17 +1,24 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Platform, StyleSheet, View, ActivityIndicator } from 'react-native';
-import { Header, SearchBar, ListItem } from 'react-native-elements'
+import { Header, SearchBar, ListItem, Icon } from 'react-native-elements'
 import axios from 'axios'
 import { FlatList } from 'react-native-gesture-handler';
 
 
 const App = () => {
-
+  const _isMounted = useRef(true)
   const [data, setData] = useState([])
   const [loading, setLoading] = useState(false)
   const [currentPage, setCurrentPage] = useState(1)
   const [dataPerPage, setDataPerPage] = useState(15)
   const [search, setSearch] = useState('')
+  const [filteredData, setFilteredData] = useState([])
+
+  useEffect(() => {
+    return () => {
+      _isMounted.current = false
+    }
+  }, [])
 
   useEffect(() => {
     const fecthData = async () => {
@@ -24,6 +31,14 @@ const App = () => {
     fecthData()
   }, [])
 
+  useEffect(() => {
+    let f = data.filter((d) => {
+      return d.Municip.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, "").includes(search)
+    })
+
+    setFilteredData(f)
+  }, [search])
+
   const isLoading = () => {
     if (loading) {
       return (
@@ -34,23 +49,16 @@ const App = () => {
     }
   }
 
-
   const indexOfLastItem = currentPage * dataPerPage > data.length ? data.length : currentPage * dataPerPage;
-  const indexOfFirstItem = 0
-  const currentItems = data.slice(indexOfFirstItem, indexOfLastItem)
+  const currentItems = data.slice(0, indexOfLastItem)
 
   const isCloseToBottom = ({ layoutMeasurement, contentOffset, contentSize }) => {
-    const paddingToBottom = 0
     return layoutMeasurement.height + contentOffset.y >=
-    contentSize.height - paddingToBottom;
+      contentSize.height - 20;
   }
 
-  const fetchData = () => {
-    setCurrentPage(currentPage + 1)
-  }
-
-  const renderRow = (({ item }) =>
-    <ListItem key={item.Cumum} title={item.Municip} subtitle={item.Province} />)
+  const renderRow = (({ item, index }) =>
+    <ListItem leftSubtitle={`${index + 1}`} key={item.Cumum} title={item.Municip} subtitle={item.Province} />)
 
   return (
     <View style={styles.container}>
@@ -63,7 +71,7 @@ const App = () => {
       />
       <SearchBar
         platform={Platform.OS}
-        placeholder="Type municipality, province..."
+        placeholder="Type your municipality..."
         onChangeText={setSearch}
         value={search}
         showLoading={loading}
@@ -71,11 +79,12 @@ const App = () => {
       {isLoading()}
       <FlatList
         keyExtractor={(item, index) => index.toString()}
-        data={currentItems}
+        data={(filteredData && filteredData.length == 0) ? currentItems : filteredData}
         renderItem={renderRow}
+        bounces={false}
         onScroll={({ nativeEvent }) => {
           if (isCloseToBottom(nativeEvent)) {
-            fetchData()
+            setCurrentPage(currentPage + 1)
           }
         }}
         scrollEventThrottle={400}
