@@ -53,7 +53,7 @@ const App = () => {
 
   useEffect(() => {
     let f = data.filter((d) => {
-      return d.Municip.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, "").includes(search)
+      return d.Municip.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, "").includes(search.toLowerCase())
     })
 
     setFilteredData(f)
